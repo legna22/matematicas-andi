@@ -35,3 +35,18 @@ services:
 
 
 la parte de instruciones que aparece debajo de lo que viene debajo del juego como tal , y de resto lo demas que quede como esta queda bien y si se puede implementar lo que viene siendo la ejecucion y una forma de que cada dificulta sea diferente estaria genial 
+
+
+// Actualizar imagen del personaje
+if (characterImage) {
+    characterImage.className = `character-image ${currentStepData.animation || 'fadeIn'}`;
+
+    // Ruta de la imagen correspondiente al paso actual
+    const imagePath = `/static/images/characters/${currentStepData.image}.png`;
+    
+    characterImage.innerHTML = `
+        <img src="${imagePath}" 
+             alt="${this.tutorialData.character}" 
+             class="character-img">
+    `;
+}

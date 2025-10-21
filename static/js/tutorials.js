@@ -235,22 +235,22 @@ class TutorialManager {
             dialogText.textContent = currentStepData.text;
         }
         
-        // Actualizar imagen del personaje
-        if (characterImage) {
-            characterImage.className = `character-image ${currentStepData.animation || 'fadeIn'}`;
-            
-            // CHANGE HERE: Reemplazar emojis con imágenes reales cuando estén disponibles
-            // const imagePath = `/static/images/characters/${currentStepData.image}.png`;
-            // characterImage.innerHTML = `<img src="${imagePath}" alt="${this.tutorialData.character}" class="character-img">`;
-            
-            // Por ahora usamos emojis como placeholder
-            const characterEmojis = {
-                khipu: '👦',
-                yupana: '👧',
-                chacana: '🧙‍♂️'
-            };
-            characterImage.innerHTML = `<div class="character-placeholder">${characterEmojis[this.currentGame] || '👦'}</div>`;
-        }
+// Actualizar imagen del personaje
+       // Actualizar imagen del personaje
+if (characterImage) {
+    characterImage.className = `character-image ${currentStepData.animation || 'fadeIn'}`;
+
+    // Ruta de la imagen correspondiente al paso actual
+    const imagePath = `/static/images/characters/${currentStepData.image}.png`;
+    
+    characterImage.innerHTML = `
+        <img src="${imagePath}" 
+             alt="${this.tutorialData.character}" 
+             class="character-img">
+    `;
+}
+
+
         
         // Actualizar botón siguiente
         if (nextButton) {
