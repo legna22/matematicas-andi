@@ -37,8 +37,15 @@ def index():
 @app.route('/khipu')
 def khipu():
     """Juego Khipu - Sistema de nudos andinos"""
-    grade = request.args.get('grade', '1')
-    level = request.args.get('level', '1')
+    # Intentar convertir grade/level a enteros; usar valores por defecto si falla
+    try:
+        grade = int(request.args.get('grade', 1))
+    except (TypeError, ValueError):
+        grade = 1
+    try:
+        level = int(request.args.get('level', 1))
+    except (TypeError, ValueError):
+        level = 1
     difficulty = request.args.get('difficulty', 'facil')
     levels_data = load_levels()
     
@@ -51,8 +58,14 @@ def khipu():
 @app.route('/yupana')
 def yupana():
     """Juego Yupana - Ábaco andino"""
-    grade = request.args.get('grade', '1')
-    level = request.args.get('level', '1')
+    try:
+        grade = int(request.args.get('grade', 1))
+    except (TypeError, ValueError):
+        grade = 1
+    try:
+        level = int(request.args.get('level', 1))
+    except (TypeError, ValueError):
+        level = 1
     levels_data = load_levels()
     
     return render_template('yupana.html', 
@@ -63,8 +76,14 @@ def yupana():
 @app.route('/chacana')
 def chacana():
     """Juego Chacana - Cruz andina"""
-    grade = request.args.get('grade', '1')
-    level = request.args.get('level', '1')
+    try:
+        grade = int(request.args.get('grade', 1))
+    except (TypeError, ValueError):
+        grade = 1
+    try:
+        level = int(request.args.get('level', 1))
+    except (TypeError, ValueError):
+        level = 1
     levels_data = load_levels()
     
     return render_template('chacana.html', 
@@ -148,7 +167,13 @@ def not_found(error):
 if __name__ == '__main__':
     # CHANGE HERE: Configuración del servidor
     # Para desarrollo local, cambiar host a 'localhost'
-    app.run(host="0.0.0.0", port=8000, debug=True)
+    import os
+    host = os.environ.get('MAT_HOST', '0.0.0.0')
+    try:
+        port = int(os.environ.get('MAT_PORT', '8000'))
+    except ValueError:
+        port = 8000
+    app.run(host=host, port=port, debug=True)
 
     from flask import render_template
 

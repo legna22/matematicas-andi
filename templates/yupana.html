@@ -1,173 +1,523 @@
 {% extends "base.html" %}
 
 {% block title %}Yupana - Matemáticas Andinas{% endblock %}
-{% block game_title %}Yupana - Ábaco Andino{% endblock %}
+{% block game_title %}Yupana - El Ábaco Inca{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/game.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/yupana.css') }}">
+
+<style>
+    /* =========================================
+       🎨 ESTÉTICA DE PIEDRA Y MAÍZ
+       ========================================= */
+    :root {
+        --stone-light: #cfd8dc;       /* Piedra clara para los huecos */
+        --stone-dark: #546e7a;        /* Piedra oscura para el tablero */
+        --stone-border: #37474f;      /* Borde de piedra */
+        --corn-yellow: #f1c40f;       /* Maíz brillante */
+        --corn-shadow: #d35400;       /* Sombra del maíz */
+        --hole-shadow: inset 2px 2px 5px rgba(0,0,0,0.6);
+    }
+
+    /* =========================================
+       1. LAYOUT PRINCIPAL
+       ========================================= */
+    .game-container {
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        min-height: 85vh;
+        padding: 40px;
+        gap: 40px;
+        max-width: 1400px;
+        margin: 0 auto;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* Fondo */
+    .game-background {
+        background: linear-gradient(135deg, #fdfbf7 0%, #e6dace 100%);
+        opacity: 0.8;
+    }
+
+    /* =========================================
+       2. PANEL IZQUIERDO (Información)
+       ========================================= */
+    .sidebar-panel {
+        flex: 0 0 300px;
+        background-color: #fdf5e6;
+        border: 4px solid #8B4513;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 10px 10px 20px rgba(0,0,0,0.2);
+        position: relative;
+    }
+
+    /* BOTÓN HOME */
+    .btn-home {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        color: #5d4037;
+        font-weight: bold;
+        margin-bottom: 15px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        background: rgba(139, 69, 19, 0.1);
+        transition: all 0.2s;
+    }
+    .btn-home:hover {
+        background: #8B4513;
+        color: white;
+    }
+
+    .question-title {
+        color: #3E2723;
+        font-size: 1.8em;
+        text-align: center;
+        border-bottom: 3px double #8B4513;
+        padding-bottom: 10px;
+        margin-top: 0;
+    }
+
+    /* =========================================
+       3. EL TABLERO YUPANA (Estructura 5-3-2)
+       ========================================= */
+    .main-game-stage {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+    }
+
+    /* Marcadores */
+    .info-panel {
+        background: #5D4037;
+        border: 3px solid #3E2723;
+        border-radius: 8px;
+        padding: 15px 30px;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        color: #fff;
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+        font-size: 1.3em;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+
+    /* El Tablero de Piedra */
+    .yupana-board {
+        display: flex;
+        gap: 15px;
+        background: var(--stone-dark);
+        padding: 25px;
+        border-radius: 15px;
+        border: 6px solid var(--stone-border);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    /* COLUMNA INDIVIDUAL */
+    .yupana-column {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        position: relative;
+        cursor: pointer;
+    }
+
+    /* Header de la columna */
+    .col-header {
+        background: #3e2723;
+        color: #ffd700;
+        padding: 5px 15px;
+        border-radius: 5px;
+        font-weight: bold;
+        font-size: 0.9em;
+        text-transform: uppercase;
+        border: 2px solid #8d6e63;
+        width: 100%;
+        text-align: center;
+    }
+
+    /* BLOQUES DE HUECOS */
+    .section-block {
+        background: #90a4ae;
+        border: 2px solid #37474f;
+        border-radius: 8px;
+        padding: 8px;
+        width: 110px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        box-shadow: inset 1px 1px 3px rgba(255,255,255,0.2);
+    }
+
+    .section-top { height: 60px; } /* 2 huecos */
+    .section-mid { height: 90px; } /* 3 huecos */
+    .section-bot { height: 130px; } /* 5 huecos */
+
+    /* EL HUECO (Socket) */
+    .socket {
+        width: 28px;
+        height: 28px;
+        background: #263238;
+        border-radius: 50%;
+        box-shadow: var(--hole-shadow);
+        position: relative;
+    }
+
+    /* EL MAÍZ */
+    .socket.filled::after {
+        content: '';
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%) scale(0);
+        width: 24px; height: 24px;
+        background: radial-gradient(circle at 30% 30%, var(--corn-yellow), var(--corn-shadow));
+        border-radius: 50%;
+        border: 1px solid #e67e22;
+        box-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+        animation: popIn 0.3s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes popIn {
+        to { transform: translate(-50%, -50%) scale(1); }
+    }
+
+    /* ESTADO DE ALERTA */
+    .column-overflow .section-block {
+        background: #ffcdd2;
+        border-color: #c62828;
+    }
+    
+    /* BOTÓN DE CANJE */
+    .btn-canje {
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        width: 80px; height: 80px;
+        border-radius: 50%;
+        background: #c0392b;
+        color: white;
+        border: 4px solid #ecf0f1;
+        font-weight: bold;
+        display: none;
+        z-index: 10;
+        cursor: pointer;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        animation: pulseBtn 1s infinite;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        font-size: 0.9em;
+    }
+    
+    .btn-canje.hidden { display: none; }
+    .btn-canje.visible { display: flex; }
+
+    @keyframes pulseBtn {
+        0% { transform: translate(-50%, -50%) scale(1); }
+        50% { transform: translate(-50%, -50%) scale(1.1); }
+        100% { transform: translate(-50%, -50%) scale(1); }
+    }
+
+    /* CONTROLES INFERIORES */
+    .controls {
+        background: rgba(255, 255, 255, 0.9);
+        padding: 15px 25px;
+        border-radius: 50px;
+        display: flex;
+        gap: 20px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .btn {
+        padding: 12px 25px;
+        border-radius: 30px;
+        border: none;
+        font-weight: bold;
+        text-transform: uppercase;
+        color: white;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    .btn:active { transform: translateY(3px); }
+    .btn-new { background: #27ae60; }
+    .btn-reset { background: #e67e22; }
+    .btn-check { background: #2980b9; }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+        .game-container { flex-direction: column; align-items: center; padding: 10px; }
+        .sidebar-panel { width: 100%; flex: none; }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="game-container yupana-container">
-    <!-- Game Background -->
-    <div class="game-background yupana-background"></div>
-    
-    <!-- Main Game Area -->
-    <div class="game-area">
-        <!-- Question Section -->
-        <div class="question-section">
-            <div class="question-pergamino">
-                <h2 class="question-title">Representa el número</h2>
-                <p class="question-desc" id="questionDesc">
-                    Usa las fichas para representar el número en la yupana
-                </p>
-                <div class="target-number">
-                    <span class="number-display" id="targetNumber">25</span>
-                </div>
-                <div class="question-info">
-                    <span class="grade-info">Grado: {{ grade }}</span>
-                    <span class="level-info">Nivel: {{ level }}</span>
-                    <span class="time-info" id="timeRemaining" style="display: none;">Tiempo: <span id="timeValue">--</span>s</span>
-                </div>
-            </div>
+<div class="game-container">
+    <div class="game-background" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index:-1;"></div>
+
+    <div class="sidebar-panel">
+        <a href="{{ url_for('index') }}" class="btn-home">
+            🏠 Volver al Inicio
+        </a>
+
+        <h2 class="question-title">La Yupana</h2>
+        
+        <p style="color: #5d4037; margin-top: 15px;">
+            El ábaco de piedra sagrado.
+            <br><br>
+            <strong>Misión:</strong> Llena los huecos con maíz para sumar.
+        </p>
+
+        <div style="background: rgba(0,0,0,0.05); padding: 15px; border-radius: 8px; font-size: 0.9em;">
+            <strong>Reglas Ancestrales:</strong>
+            <ul style="padding-left: 20px; margin-top: 5px;">
+                <li><strong>Abajo:</strong> 5 huecos (Base)</li>
+                <li><strong>Medio:</strong> 3 huecos (Cuerpo)</li>
+                <li><strong>Arriba:</strong> 2 huecos (Cabeza)</li>
+                <li style="color:#c0392b; font-weight:bold; margin-top:5px;">¡10 maíces = CANJE!</li>
+            </ul>
         </div>
         
-        <!-- Yupana Board Area -->
-        <div class="yupana-area">
-            <div class="yupana-board">
-                <!-- Yupana Grid -->
-                <div class="yupana-grid" id="yupanaGrid">
-                    <!-- Centenas -->
-                    <div class="yupana-column centenas">
-                        <div class="column-header">100s</div>
-                        <div class="cell" data-value="500"></div>
-                        <div class="cell" data-value="300"></div>
-                        <div class="cell" data-value="200"></div>
-                        <div class="cell" data-value="100"></div>
-                    </div>
-                    
-                    <!-- Decenas -->
-                    <div class="yupana-column decenas">
-                        <div class="column-header">10s</div>
-                        <div class="cell" data-value="50"></div>
-                        <div class="cell" data-value="30"></div>
-                        <div class="cell" data-value="20"></div>
-                        <div class="cell" data-value="10"></div>
-                    </div>
-                    
-                    <!-- Unidades -->
-                    <div class="yupana-column unidades">
-                        <div class="column-header">1s</div>
-                        <div class="cell" data-value="5"></div>
-                        <div class="cell" data-value="3"></div>
-                        <div class="cell" data-value="2"></div>
-                        <div class="cell" data-value="1"></div>
-                    </div>
+        <button class="btn" onclick="showHelp()" style="width:100%; background:#8B4513; margin-top:auto;">
+            ❓ Ayuda
+        </button>
+    </div>
+
+    <div class="main-game-stage">
+        
+        <div class="info-panel">
+            <div>OBJETIVO: <span id="targetDisplay" style="color: #FFD700;">--</span></div>
+            <div>VALOR: <span id="currentDisplay" style="color: #2ecc71;">0</span></div>
+        </div>
+
+        <div class="yupana-board">
+            
+            <div class="yupana-column" id="col-2" onclick="addToken(2)">
+                <div class="col-header">Centena (100)</div>
+                
+                <div class="section-block section-top">
+                    <div class="socket" id="c2-s9"></div>
+                    <div class="socket" id="c2-s10"></div>
                 </div>
                 
-                <!-- Counter Pieces -->
-                <div class="pieces-area">
-                    <div class="piece-stack">
-                        <div class="piece available" draggable="true" data-type="small"></div>
-                        <div class="piece available" draggable="true" data-type="small"></div>
-                        <div class="piece available" draggable="true" data-type="small"></div>
-                        <div class="piece available" draggable="true" data-type="small"></div>
-                        <div class="piece available" draggable="true" data-type="small"></div>
-                    </div>
-                    <div class="piece-stack">
-                        <div class="piece available" draggable="true" data-type="medium"></div>
-                        <div class="piece available" draggable="true" data-type="medium"></div>
-                        <div class="piece available" draggable="true" data-type="medium"></div>
-                    </div>
-                    <div class="piece-stack">
-                        <div class="piece available" draggable="true" data-type="large"></div>
-                        <div class="piece available" draggable="true" data-type="large"></div>
-                    </div>
+                <div class="section-block section-mid">
+                    <div class="socket" id="c2-s6"></div>
+                    <div class="socket" id="c2-s7"></div>
+                    <div class="socket" id="c2-s8"></div>
                 </div>
+                
+                <div class="section-block section-bot">
+                    <div class="socket" id="c2-s1"></div>
+                    <div class="socket" id="c2-s2"></div>
+                    <div class="socket" id="c2-s3"></div>
+                    <div class="socket" id="c2-s4"></div>
+                    <div class="socket" id="c2-s5"></div>
+                </div>
+
+                <button class="btn-canje hidden" id="canje-2" onclick="doCanje(event, 2)">🔄<br>CANJE</button>
             </div>
+
+            <div class="yupana-column" id="col-1" onclick="addToken(1)">
+                <div class="col-header">Decena (10)</div>
+                
+                <div class="section-block section-top">
+                    <div class="socket" id="c1-s9"></div>
+                    <div class="socket" id="c1-s10"></div>
+                </div>
+                
+                <div class="section-block section-mid">
+                    <div class="socket" id="c1-s6"></div>
+                    <div class="socket" id="c1-s7"></div>
+                    <div class="socket" id="c1-s8"></div>
+                </div>
+                
+                <div class="section-block section-bot">
+                    <div class="socket" id="c1-s1"></div>
+                    <div class="socket" id="c1-s2"></div>
+                    <div class="socket" id="c1-s3"></div>
+                    <div class="socket" id="c1-s4"></div>
+                    <div class="socket" id="c1-s5"></div>
+                </div>
+
+                <button class="btn-canje hidden" id="canje-1" onclick="doCanje(event, 1)">🔄<br>CANJE</button>
+            </div>
+
+            <div class="yupana-column" id="col-0" onclick="addToken(0)">
+                <div class="col-header">Unidad (1)</div>
+                
+                <div class="section-block section-top">
+                    <div class="socket" id="c0-s9"></div>
+                    <div class="socket" id="c0-s10"></div>
+                </div>
+                
+                <div class="section-block section-mid">
+                    <div class="socket" id="c0-s6"></div>
+                    <div class="socket" id="c0-s7"></div>
+                    <div class="socket" id="c0-s8"></div>
+                </div>
+                
+                <div class="section-block section-bot">
+                    <div class="socket" id="c0-s1"></div>
+                    <div class="socket" id="c0-s2"></div>
+                    <div class="socket" id="c0-s3"></div>
+                    <div class="socket" id="c0-s4"></div>
+                    <div class="socket" id="c0-s5"></div>
+                </div>
+
+                <button class="btn-canje hidden" id="canje-0" onclick="doCanje(event, 0)">🔄<br>CANJE</button>
+            </div>
+
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-new" onclick="newProblem()">🎯 Nueva Suma</button>
+            <button class="btn btn-reset" onclick="resetYupana()">🗑️ Borrar Todo</button>
+            <button class="btn btn-check" onclick="checkResult()">✅ Verificar</button>
         </div>
         
-        <!-- Answer Section -->
-        <div class="answer-section">
-            <div class="current-value">
-                <span class="value-label">Valor actual:</span>
-                <span class="value-number" id="currentValue">0</span>
-            </div>
-            <div class="action-buttons">
-                <button class="btn btn-secondary" onclick="clearBoard()" aria-label="Limpiar tablero">
-                    Limpiar
-                </button>
-                <button class="btn btn-primary" onclick="checkAnswer()" aria-label="Verificar respuesta">
-                    Verificar
-                </button>
-            </div>
-        </div>
+        <div id="feedback" style="height: 30px; font-weight: bold; font-size: 1.2em; text-align: center;"></div>
     </div>
-    
-    <!-- Progress Bar -->
-    <div class="progress-container">
-        <div class="progress-bar">
-            <div class="progress-fill" style="width: 45%"></div>
-        </div>
-        <span class="progress-text">Progreso del Nivel</span>
-    </div>
-    
-    <!-- Help Button -->
-    <button class="help-btn" onclick="showHelp()" aria-label="Mostrar ayuda">
-        <span class="help-icon">❓</span>
-    </button>
 </div>
 
-<!-- Help Modal -->
 <div class="modal" id="helpModal" style="display: none;">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>Cómo usar la Yupana</h3>
-            <button class="modal-close" onclick="closeHelp()" aria-label="Cerrar ayuda">&times;</button>
+    <div class="modal-content" style="border: 4px solid #8B4513; background:#fdf5e6;">
+        <div class="modal-header" style="background:#8B4513; color:white;">
+            <h3>Secreto de la Yupana</h3>
+            <button class="modal-close" onclick="closeHelp()">&times;</button>
         </div>
-        <div class="modal-body">
-            <p>La yupana era un ábaco usado por las civilizaciones andinas para realizar cálculos.</p>
-            <ul>
-                <li><strong>Columnas:</strong> Representan unidades, decenas y centenas</li>
-                <li><strong>Fichas pequeñas:</strong> Valor de 1 en su columna</li>
-                <li><strong>Fichas medianas:</strong> Valor de 3 en su columna</li>
-                <li><strong>Fichas grandes:</strong> Valor de 5 en su columna</li>
-            </ul>
-            <p>Arrastra las fichas a las celdas para formar el número objetivo.</p>
+        <div class="modal-body" style="color:#3e2723;">
+            <p>Este tablero imita la antigua Yupana de madera.</p>
+            <p>1. Llena los huecos de abajo hacia arriba.</p>
+            <p>2. Cada columna tiene capacidad para <strong>10 maíces</strong>.</p>
+            <p>3. Cuando llenas todos los huecos, ¡haz el canje!</p>
         </div>
     </div>
 </div>
 
-<!-- Level Data -->
 <script>
 window.GAME_DATA = {
     game: 'yupana',
-    grade: {{ grade }},
-    level: {{ level }},
-    levels: {{ levels | tojson | safe }}
-
-
+    grade: {{ grade | tojson }},
+    level: {{ level | tojson }}
 };
 </script>
 {% endblock %}
 
 {% block extra_js %}
-<script src="{{ url_for('static', filename='js/progress-manager.js') }}"></script>
-<script src="{{ url_for('static', filename='js/game-engine.js') }}"></script>
-<script src="{{ url_for('static', filename='js/tutorials.js') }}"></script>
-<script src="{{ url_for('static', filename='js/yupana.js') }}"></script>
-<script src="{{ url_for('static', filename='js/yupana-dynamic.js') }}"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Mostrar tutorial antes de iniciar el juego
-    showTutorial('yupana', function() {
-        initYupanaDynamicGame(); // Usar la nueva implementación
-        showGameHeader();
-        console.log('🧮 Yupana game initialized after tutorial for Grade {{ grade }}, Level {{ level }}');
+    // Variables Globales
+    let colValues = [0, 0, 0]; // [Unidades, Decenas, Centenas]
+    let targetProblem = { num1: 0, num2: 0, total: 0 };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log("🌽 Yupana 5-3-2 Iniciada");
+        newProblem();
     });
-    
-    console.log('📚 Yupana tutorial system ready for Grade {{ grade }}, Level {{ level }}');
-});
+
+    // 1. GENERAR PROBLEMA
+    function newProblem() {
+        let n1 = Math.floor(Math.random() * 40) + 1;
+        let n2 = Math.floor(Math.random() * 40) + 1;
+        targetProblem = { num1: n1, num2: n2, total: n1 + n2 };
+
+        document.getElementById('targetDisplay').innerText = `${n1} + ${n2} = ?`;
+        document.getElementById('feedback').innerText = "";
+        resetYupana();
+    }
+
+    // 2. AGREGAR MAÍZ
+    function addToken(colIndex) {
+        if (colValues[colIndex] < 10) {
+            colValues[colIndex]++;
+            updateVisuals(colIndex);
+        } else {
+            const btn = document.getElementById(`canje-${colIndex}`);
+            btn.classList.add('visible');
+        }
+    }
+
+    // 3. CANJE
+    function doCanje(event, colIndex) {
+        event.stopPropagation();
+        
+        if (colValues[colIndex] >= 10) {
+            colValues[colIndex] -= 10;
+            updateVisuals(colIndex);
+            
+            // Pasar 1 a la siguiente columna
+            if (colIndex + 1 < colValues.length) {
+                setTimeout(() => {
+                    addToken(colIndex + 1);
+                }, 300);
+            }
+        }
+    }
+
+    // 4. ACTUALIZAR VISUALES
+    function updateVisuals(colIndex) {
+        const currentVal = colValues[colIndex];
+        const colDiv = document.getElementById(`col-${colIndex}`);
+        const btnCanje = document.getElementById(`canje-${colIndex}`);
+
+        for (let i = 1; i <= 10; i++) {
+            const socket = document.getElementById(`c${colIndex}-s${i}`);
+            if (i <= currentVal) {
+                socket.classList.add('filled');
+            } else {
+                socket.classList.remove('filled');
+            }
+        }
+
+        if (currentVal >= 10) {
+            colDiv.classList.add('column-overflow');
+            btnCanje.classList.remove('hidden');
+            btnCanje.classList.add('visible');
+        } else {
+            colDiv.classList.remove('column-overflow');
+            btnCanje.classList.remove('visible');
+            btnCanje.classList.add('hidden');
+        }
+
+        let total = (colValues[2] * 100) + (colValues[1] * 10) + colValues[0];
+        document.getElementById('currentDisplay').innerText = total;
+    }
+
+    // 5. VERIFICAR
+    function checkResult() {
+        let total = (colValues[2] * 100) + (colValues[1] * 10) + colValues[0];
+        const feedback = document.getElementById('feedback');
+
+        if (colValues[0] >= 10 || colValues[1] >= 10) {
+            feedback.innerHTML = "<span style='color:#c0392b'>⚠️ ¡Completa los canjes primero!</span>";
+            return;
+        }
+
+        if (total === targetProblem.total) {
+            feedback.innerHTML = "<span style='color:#27ae60'>🎉 ¡Correcto! Sabiduría Inca.</span>";
+            setTimeout(newProblem, 2000);
+        } else {
+            feedback.innerHTML = "<span style='color:#c0392b'>❌ Incorrecto. Revisa la suma.</span>";
+        }
+    }
+
+    function resetYupana() {
+        colValues = [0, 0, 0];
+        updateVisuals(0);
+        updateVisuals(1);
+        updateVisuals(2);
+    }
+
+    function showHelp() { document.getElementById('helpModal').style.display = 'flex'; }
+    function closeHelp() { document.getElementById('helpModal').style.display = 'none'; }
 </script>
 {% endblock %}

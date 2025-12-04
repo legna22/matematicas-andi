@@ -74,7 +74,7 @@
       generateTarget() {
         const range = this.difficultyRanges[this.difficulty];
         this.targetNumber = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
-        document.getElementById('targetNumber').textContent = this.targetNumber;
+        const targetEl = document.getElementById('targetNumber'); if (targetEl) targetEl.textContent = this.targetNumber;
         this.attempts++;
         this.updateDisplay();
       }
@@ -142,11 +142,11 @@
 
       showAchievement(message) {
         const achievementDiv = document.getElementById('achievement');
-        achievementDiv.textContent = message;
-        achievementDiv.style.display = 'block';
-        setTimeout(() => {
-          achievementDiv.style.display = 'none';
-        }, 4000);
+        if (achievementDiv) {
+          achievementDiv.textContent = message;
+          achievementDiv.style.display = 'block';
+          setTimeout(() => { achievementDiv.style.display = 'none'; }, 4000);
+        }
       }
 
       reset() {
@@ -155,33 +155,34 @@
       }
 
       updateDisplay() {
-        document.getElementById('currentNumber').textContent = this.calculateValue();
-        
+        const currentNumberEl = document.getElementById('currentNumber'); if (currentNumberEl) currentNumberEl.textContent = this.calculateValue();
+
         this.columns.forEach((col, index) => {
-          document.getElementById(`count${index}`).textContent = col.knots;
+          const countEl = document.getElementById(`count${index}`); if (countEl) countEl.textContent = col.knots;
           const cordElement = document.getElementById(`cord${index}`);
+          if (!cordElement) return;
           cordElement.innerHTML = '';
-          
+
           for (let i = 0; i < col.knots; i++) {
             const knot = document.createElement('div');
             knot.className = 'knot';
             knot.style.top = (35 + i * 30) + 'px';
-            
+
             // 🎨 Asignar color consistente basado en posición
             const colorIndex = (index * 3 + i) % this.palette.length;
             knot.style.background = this.palette[colorIndex];
-            
+
             // Añadir ligera variación en posición para más naturalidad
             const wobble = (Math.sin(i * 0.5) * 3);
             knot.style.left = (wobble - 12) + 'px';
-            
+
             cordElement.appendChild(knot);
           }
         });
-        
-        document.getElementById('score').textContent = this.score;
-        document.getElementById('streak').textContent = this.streak;
-        document.getElementById('attempts').textContent = this.attempts;
+
+        const scoreEl = document.getElementById('score'); if (scoreEl) scoreEl.textContent = this.score;
+        const streakEl = document.getElementById('streak'); if (streakEl) streakEl.textContent = this.streak;
+        const attemptsEl = document.getElementById('attempts'); if (attemptsEl) attemptsEl.textContent = this.attempts;
       }
 
       setDifficulty(level, btn) {
