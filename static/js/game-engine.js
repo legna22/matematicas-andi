@@ -459,7 +459,7 @@ class GameEngine {
 
         if (nextLevel) {
             // Navegar al siguiente nivel
-            const url = `/${this.gameType}?grade=${nextLevel.grade}&level=${nextLevel.level}`;
+            const url = `${this.gameType}.html?grade=${nextLevel.grade}&level=${nextLevel.level}`;
             window.location.href = url;
         } else {
             // Completó todos los niveles
@@ -479,10 +479,10 @@ class GameEngine {
                 <h2>¡Felicitaciones!</h2>
                 <p>Has completado todos los niveles de ${this.gameType.charAt(0).toUpperCase() + this.gameType.slice(1)}!</p>
                 <div class="complete-buttons">
-                    <button class="btn btn-primary" onclick="window.location.href='/'">
+                    <button class="btn btn-primary" onclick="window.location.href='index.html'">
                         Elegir Otro Juego
                     </button>
-                    <button class="btn btn-secondary" onclick="window.location.href='/perfil'">
+                    <button class="btn btn-secondary" onclick="window.location.href='perfil.html'">
                         Ver Mi Progreso
                     </button>
                 </div>
@@ -512,7 +512,7 @@ class GameEngine {
                     <button class="btn btn-primary" onclick="location.reload()">
                         Intentar de Nuevo
                     </button>
-                    <button class="btn btn-secondary" onclick="window.location.href='/'">
+                    <button class="btn btn-secondary" onclick="window.location.href='index.html'">
                         Volver al Inicio
                     </button>
                 </div>

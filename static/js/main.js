@@ -230,7 +230,7 @@ function startGame() {
  */
 function buildGameUrl() {
     const { selectedGame, selectedGrade, selectedDifficulty } = window.AppState;
-    const baseUrl = `/${selectedGame}`;
+    const baseUrl = `${selectedGame}.html`;
     const params = new URLSearchParams({
         grade: selectedGrade,
         level: 1, // Siempre empezar en nivel 1
@@ -302,7 +302,7 @@ function goHome() {
     showLoadingOverlay();
     
     setTimeout(() => {
-        window.location.href = '/';
+        window.location.href = 'index.html';
     }, 300);
 }
 
